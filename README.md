@@ -47,6 +47,21 @@ Several skills give blunt verdicts on purpose. They're meant to catch problems b
 
 ---
 
+## See it work
+
+We planted eight security flaws in a [small Flask auth module](examples/secure-code-review/auth.py) and wrote down the [answer key](examples/secure-code-review/PLANTED.md). Then a fresh Claude Code session that never saw the key reviewed the file with `secure-code-review`:
+
+| | |
+|---|---|
+| **Planted flaws found** | 7 of 8, plus 1 partial |
+| **Ranking** | Unauthenticated attack paths first: fail-open authorization, spoofable headers, SQL injection |
+| **Each finding** | The exact request that exploits it, and a one-line fix |
+| **Bonus** | A critical bug we *didn't* plant: `"token": null` resets any account's password |
+
+**[→ Scorecard and full, unedited review](examples/secure-code-review/)**
+
+---
+
 ## What's inside
 
 | | Category | Skills |
