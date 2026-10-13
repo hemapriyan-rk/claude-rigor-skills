@@ -6,6 +6,8 @@ This demo is set up so you can check the result yourself:
 2. **[PLANTED.md](PLANTED.md)** is the answer key, written before the review ran.
 3. **[review.md](review.md)** is the output of a fresh Claude Code session that had only `auth.py` and the skill, word for word. It never saw the answer key.
 
+**[▶ Watch the 50-second walkthrough (demo.mp4)](demo.mp4)**: the setup, the review output, the scorecard, and the bug nobody planted.
+
 ## Scorecard
 
 | # | Planted flaw | Result |
