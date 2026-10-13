@@ -1,34 +1,61 @@
 ---
 name: performance-optimization
-description: Profiling-driven performance optimization — measure the actual hot path before changing anything, fix algorithmic complexity before micro-optimizing, verify improvement with the same measurement that found the problem. Use whenever code or a system needs to be faster, or the user says something is slow. Do not use this to justify guessing at what's slow — that's the exact failure mode it exists to prevent.
+description: Make slow code or systems faster by measuring first. Profile the real hot path, fix algorithmic complexity before micro-optimizing, and verify with the same measurement. Use when something is slow or needs to be faster. Never guesses at the bottleneck.
 ---
 
 # Performance Optimization
 
-"It's probably the loop" without a profile is a guess that costs a day when it's wrong. This skill makes measurement the first step, not an afterthought used to justify a fix already decided on instinct.
+"It's probably the loop" without a profile is a guess that costs a day when it's wrong. Measure, fix the biggest thing the measurement shows, measure again, and stop when the target is met.
 
-## Step 1 — Measure first, always
+## 1. Set scope and budget
 
-Get an actual profile (CPU, memory, I/O wait — whichever dimension matches the complaint) before changing a single line. If profiling tooling isn't set up yet, setting it up is step 1, not a skippable nicety.
+- **Agree on the target.** What metric (p50/p95 latency, throughput, runtime, memory), on what input, and what number counts as done. If the user didn't give one, propose one and continue.
+- **Stop when the target is met.** Don't keep optimizing past it. Each extra change adds risk for no requested benefit.
+- **Load the tool list.** Read `references/profilers.md` from this skill's base directory together with the code, in the same step. It names the right profiler and benchmark method for the language at hand.
 
-## Step 2 — Identify the bottleneck class before picking a fix
+## 2. Measure before changing anything
 
-CPU-bound, I/O-bound, and memory-bound problems need completely different fixes. A CPU micro-optimization on an I/O-bound path (waiting on a network call or disk) does nothing — confirm which class this actually is from the Step 1 profile before choosing a direction.
+- Reproduce the slowness with a repeatable command and record the baseline number. Use realistic input size: a 100-row test hides an O(n²) that 1M rows exposes.
+- Profile the dimension that matches the complaint: CPU, wall-clock/I-O wait, memory, or database queries.
+- If you can't run code in this environment, say so, give the user the exact profiling command to run, and work from their output. Don't present a guess as a measurement.
 
-## Step 3 — Fix in this order of leverage
+## 3. Classify the bottleneck
 
-1. **Algorithmic complexity** — an O(n²) → O(n log n) change beats any constant-factor optimization at real scale; always check this first.
-2. **Data structure choice** — the right structure for the actual access pattern (see `database-design` for the same principle applied to schemas) often removes the need for the next step entirely.
-3. **Micro-optimization** — inlining, avoiding allocations in a hot loop, reducing redundant work. Only worth doing once the profile shows this specific spot is still the bottleneck after the first two.
+From the profile, decide which kind it is:
 
-## Step 4 — Don't over-correct into premature optimization
+- **CPU-bound:** time is spent computing.
+- **I/O-bound:** time is spent waiting on network, disk, or database. A faster loop changes nothing here.
+- **Memory-bound:** allocation, garbage collection, or swapping dominates.
 
-The profile decides what's worth touching — not intuition about what "looks inefficient." A path that isn't on the critical path per the Step 1 measurement doesn't need optimizing regardless of how it reads; touching it burns time and adds risk for no measured benefit.
+Pick the fix direction only after this.
 
-## Step 5 — Verify with the same measurement, on the metric that actually matters
+## 4. Fix in order of leverage
 
-Re-run the exact profile or benchmark that identified the problem — not a different, easier-to-pass one — and confirm the user-facing metric (actual latency, actual throughput) improved, not just a proxy that's easier to move.
+1. **Algorithm or query shape:** O(n²) → O(n log n), N+1 queries → one batched query, repeated work → computed once. This usually beats everything else combined.
+2. **Data structure:** list membership → set lookup, repeated string concatenation → join or a buffer.
+3. **I/O pattern:** batching, concurrency, caching, an index.
+4. **Micro-optimization:** only if the profile still points at the same spot after 1–3.
+
+Don't touch code that isn't on the hot path, however inefficient it looks.
+
+## 5. Verify the same way
+
+Re-run the exact baseline command on the same input. Report before and after on the metric that was agreed, and confirm the output is unchanged (same result, or the test suite passes). A faster wrong answer is a regression.
 
 ## Output
 
-State the bottleneck identified (with the profile evidence, not just an assertion), the fix applied and why it was picked over other options at that leverage level, and the before/after measurement from the same profiling method.
+```
+## Result
+<metric>: <before> → <after> (<n>× faster) on <input>.
+
+## Bottleneck
+<what the profile showed, with the key numbers>, <CPU / I-O / memory>-bound.
+
+## Change
+<the fix, as a diff or code>, and why it was picked over the alternatives.
+
+## Verified
+<command re-run>, <output unchanged: how checked>.
+```
+
+For example: *"Runtime: 41.8 s → 0.6 s (70×) on 50,000 rows. `cProfile` shows 97% of time in `list.__contains__` inside `dedupe()`: membership tests on a list, O(n²)."*

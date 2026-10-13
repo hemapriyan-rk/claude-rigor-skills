@@ -1,66 +1,73 @@
 ---
 name: researcher
-description: Conduct deep, adversarial technical research — prior art, state-of-the-art, competitive landscape, standards — for patents, papers, architecture decisions, or any claim that needs to survive scrutiny. Use whenever the user asks to research a technical topic, check if something already exists, find prior art, scope a literature review, or validate a technical/market claim before committing to it. Do not use for quick single-fact lookups — this is for multi-source, defensible research where being wrong is expensive.
+description: Adversarial technical research that tries to break the claim, not confirm it. Covers papers, patents, shipped products, and standards, with a search budget sized to the stakes. Use to check prior art, map the state of the art, or validate a claim before committing to it. Not for one-fact lookups.
 ---
 
 # Researcher
 
-Most "research" fails for one reason: it searches to confirm, not to falsify. This skill exists to produce research that survives someone actively trying to break it — a patent examiner, a peer reviewer, a competitor's lawyer, a skeptical cofounder.
+Most research fails because it searches to confirm, not to falsify. This skill produces research that survives a patent examiner, a peer reviewer, or a skeptical cofounder, and spends only as many searches as the decision is worth.
 
-## Step 1 — Scope before searching
+## 1. Scope and budget
 
-Pin down, in writing, before running any search:
-- The exact claim or question being tested (not "is my idea good" — "does a system with properties X, Y, Z already exist, and if a close variant exists, what exactly differs").
-- The domain boundaries (industry, geography, time window — a 2019 paper doesn't tell you what shipped in 2026).
-- What would count as a **kill** — the single strongest form of prior art or counter-evidence that would invalidate the premise. Name it before searching for it. If you can't name what would kill the claim, you don't understand the claim yet.
+Before any search, write down:
 
-## Step 2 — Search across every layer that matters, not just the easy one
+- **The claim being tested,** stated so it can be false: "A system that does X using Y under constraint Z doesn't exist," not "is my idea good?"
+- **What would kill it:** the specific evidence that would make the claim false. If you can't name it, you don't understand the claim yet.
+- **The search budget,** based on what the answer will decide:
 
-Skipping a layer is the single most common way research gets blindsided later. Cover what's relevant to the question:
+| Stakes | Budget | Example |
+|---|---|---|
+| **Quick** | up to 5 searches, 2 page reads | Is this idea worth an afternoon? |
+| **Standard** | up to 15 searches, 6 page reads | Choosing an approach for a project |
+| **Deep** | up to 40 searches, 15 page reads | Patent filing, paper submission, months of work |
 
-- **Academic**: arXiv, IEEE Xplore, ACM DL, Google Scholar — for SOTA techniques and named prior work.
-- **Patents**: Google Patents, Espacenet, WIPO PatentScope, USPTO full-text search — required whenever novelty or patentability is even adjacent to the question. A literature search with no patent search is not a novelty search; patents are often the closest prior art and never show up in a plain web search.
-- **Commercial / shipped product**: company docs, changelogs, GitHub repos, press releases, app store listings, Show HN / Product Hunt. Papers describe what was published; products describe what actually exists and works. Both matter, separately.
-- **Standards / regulatory**: relevant when the domain has one (medical devices, safety systems, telecom, etc.) — these often constrain what's viable regardless of technical novelty.
+Default to **Standard** unless the user says otherwise. Say which budget you're using.
 
-Scale the number of searches to how much rides on the answer. A throwaway question gets a few searches. A patent claim or an architecture decision that will take months to build gets as many searches as it takes to either find the killer reference or convince yourself it's genuinely not out there.
+**Stop early** when you find the kill evidence (report it), or when every relevant layer has been searched and fresh queries only return sources you've already seen.
 
-## Step 3 — Deliberately search for the kill, not just supporting evidence
+Read `references/sources.md` from this skill's base directory before the first search. It lists where to search for each layer and how to build queries.
 
-After the first pass looks favorable, run a second pass whose only goal is to break it: search using the vocabulary a competitor, examiner, or reviewer would use, not the vocabulary the user used to describe their own idea. Different naming conventions hide the closest prior art from naive searches constantly — search by mechanism and function, not just by the user's chosen terminology.
+## 2. Search every layer that matters
 
-## Step 4 — Verify load-bearing claims twice
+Skipping a layer is the most common way research gets blindsided. Cover the ones relevant to the claim:
 
-Identify the 2-3 claims the whole conclusion actually depends on. Each of those needs at least two independent sources, not one source cited twice. Everything else can be single-sourced and flagged as such.
+- **Academic:** papers and preprints.
+- **Patents:** required whenever novelty is even part of the question. Patents rarely show up in plain web search.
+- **Shipped products and open source:** what actually exists and works, as opposed to what was published.
+- **Standards and regulation:** when the domain has them.
 
-## Output structure
+## 3. Search for the kill
+
+After a favorable first pass, spend part of the budget trying to break the conclusion. Search with the words a competitor or examiner would use, describing the **mechanism**, not the user's own terms. Different names for the same thing hide the closest prior art from naive searches.
+
+## 4. Double-source what the conclusion rests on
+
+Find the two or three claims the conclusion depends on. Each needs two independent sources. Mark everything else as single-sourced.
+
+## Output
 
 ```
-# Research: [topic]
+# Research: <topic>
+Budget: <Quick / Standard / Deep>, <n> searches used.
 
-## Question / claim being tested
-## What would falsify this (stated up front, before results)
+## Claim tested
+## What would falsify it (stated before searching)
 
-## Prior art & existing solutions
-| Source | Mechanism | How close | Gap vs. the idea |
+## Closest existing work
+| Source (dated) | Type | Mechanism | How close | Gap vs. the claim |
 
-## State of the art (non-competing techniques worth knowing)
+## Strongest counter-evidence
+<the best evidence against the claim, or "none found" plus which layers and queries were checked>
 
-## Strongest counter-evidence found
-(if none found, say so explicitly and say how hard you looked — "checked X, Y, Z layers" — don't imply absence of evidence is evidence of absence without showing the work)
+## Verdict
+<supported / weakened / killed>, in one or two sentences, with confidence and why.
 
-## Open gaps / unresolved questions
-
-## Sources
-(dated, layered by type — patent / paper / product / standard)
+## Open questions
+## Sources (dated, grouped by type)
 ```
 
-## Anti-patterns to avoid
+Rules for the write-up:
 
-- Reporting only sources that agree with the premise.
-- Treating marketing copy or a company's own claims as verified fact.
-- Citing a single source for a claim the whole conclusion rests on.
-- Stopping the search the moment something reassuring turns up.
-- Presenting search-engine confidence as domain confidence — a thin result set means "look harder or say it's inconclusive," not "probably fine."
-
-Hand off the output to the **researcher-evaluator** skill for a second, adversarial pass before treating it as settled — you wrote it, you're the worst-positioned judge of your own blind spots.
+- Don't treat marketing pages or a company's claims about itself as verified fact.
+- "No counter-evidence found" must say how hard you looked.
+- Hand the result to `researcher-evaluator` for a second pass when the stakes are Deep.

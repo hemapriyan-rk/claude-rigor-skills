@@ -27,6 +27,10 @@ This demo is set up so you can check the result yourself:
 
 This is a real critical bug that the author of the demo didn't intend to plant. Other findings not in the answer key include the reset token being printed to logs, a race between two reset confirmations, and missing login rate limiting.
 
+## Latest version
+
+The scorecard above is for the skill as of commit `46c86ed`. [review-latest.md](review-latest.md) is a run of the current version on the same file (2026-10-13, Claude Code 2.1.296, `claude-sonnet-5-5`, $0.16), unedited. That version reads its auth checklist and sink list before reviewing. It found the same planted flaws and the null-token bypass, gave one finding per root cause with the exact exploit request, and named what to fix first. The constant-time comparison again appears only inside a fix.
+
 ## Run it yourself
 
 ```sh

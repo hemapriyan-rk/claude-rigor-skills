@@ -1,34 +1,54 @@
 ---
 name: secure-code-review
-description: Review code, a diff, or a PR for real security and correctness bugs — not style nitpicks. Use before merging anything that crosses a trust boundary (service-to-service calls, user input, file/network I/O, auth checks), whenever the user asks for a code review or security review, or before a patent PoC / project component gets treated as production-ready. Prioritizes exploitable findings over cosmetic ones.
+description: Review code, a diff, or a PR for exploitable security and correctness bugs, ranked by real attacker impact, not style. Use for code or security review requests and before merging anything that crosses a trust boundary (user input, auth, service calls, file or network I/O).
 ---
 
 # Secure Code Review
 
-A review that produces forty style comments and misses the one auth bypass is worse than no review — it burns the reviewee's attention on noise and buries the thing that matters. This skill finds the thing that matters first.
+A review that lists forty style nits and misses the one auth bypass is worse than no review. Find what an attacker can actually use, prove it with a concrete request, and stop.
 
-## Read the whole diff/file before judging anything
+## 1. Set scope and budget
 
-Don't review line-by-line in isolation — a change that looks fine alone can break an invariant defined elsewhere in the file. Understand what the code is supposed to guarantee before checking whether it does.
+- **Review what was asked.** For a diff or PR, review the changed lines plus the code they call into. For a file, that file plus the functions it calls. Don't read the whole repository unless asked to.
+- **Size the effort to the risk.** Code handling auth, payments, crypto, file paths, or shell/SQL gets the full checklist. Internal utilities with no untrusted input get a quick pass of steps 2 and 3 only.
+- **Read everything you need in one step.** Read the code together with the reference files that apply, in parallel. The references are in this skill's base directory: `references/auth-checklist.md` if the code handles login, sessions, tokens, password reset, or role checks; `references/sinks.md` if it builds SQL, shell commands, file paths, templates, or outbound URLs. Skip any reference that doesn't apply.
+- **Read the whole unit once before judging lines.** A line that looks fine alone can break an invariant set elsewhere in the file.
 
-## Check these classes explicitly, in priority order
+## 2. Map trust boundaries
 
-1. **Trust boundaries** — every point where data crosses from a less-trusted zone to a more-trusted one (user input, another service's response, a file read, a sensor reading, a retrieved document). Is it validated *at the boundary*, or does validation happen somewhere downstream where it's easy to skip on a new code path?
-2. **Auth/authz** — is every internal service-to-service call actually authenticated, or does the code assume "it's internal, it's fine"? That assumption is the single most common real-world breach vector in distributed systems — internal trust is not a security boundary.
-3. **Race conditions / TOCTOU** — check-then-act patterns on shared state, especially across async boundaries or between a permission check and the operation it gates.
-4. **Injection** — anywhere a string gets built from untrusted input and then interpreted (SQL, shell, template, deserialization). Check the actual sink, not just whether input "looks sanitized."
-5. **Error handling that swallows security-relevant failures** — a caught exception that logs and continues past a failed auth check or failed validation is a silent bypass.
-6. **Secrets** — hardcoded keys/tokens, secrets in logs, secrets in error messages returned to a client.
-7. **Unsafe defaults** — fail-open instead of fail-closed on any check that matters.
+List every place untrusted data enters: request bodies, headers, query strings, cookies, file contents, environment, other services' responses, database values written by users. Then follow each one to where it is used. Most real bugs sit on these paths.
 
-## Output format
+## 3. Check in priority order
+
+1. **Authentication and authorization.** Who is the caller, and how is that proven? Any identity taken from a client-controlled header, any "internal" caller trusted without proof, any check that fails open on an exception. Go through every item in `references/auth-checklist.md` that applies.
+2. **Injection.** Untrusted data reaching an interpreter: SQL, shell, templates, deserializers, file paths, URLs fetched server-side. Check the actual sink, not whether input "looks sanitized." Use the section of `references/sinks.md` for the language in front of you.
+3. **Races and TOCTOU.** Check-then-act on shared state, especially between a permission check and the action it guards, or a read-then-update of a single-use token.
+4. **Swallowed failures.** A caught exception that logs and continues past a failed check is a silent bypass.
+5. **Secrets.** Hardcoded keys, secrets in logs or error responses.
+6. **Unsafe defaults.** Fail-open behavior, debug modes, permissive CORS, missing rate limits on credential endpoints.
+
+## 4. Prove each finding
+
+For every finding, state the exact input or request that exploits it and what the attacker gets. If you can't construct one, it's Low or not a finding. Don't report theoretical issues as Critical.
+
+Before reporting, check coverage: every checklist item you went through is either a finding or something you confirmed is handled. Minor items still go in Low, in one line each.
+
+## 5. Report
+
+Use this format. Rank by exploitability, not by how easy the finding was to spot.
+
+```
+## Critical | High | Medium | Low
+- `file:line` **What's wrong.** Exploit: <the request or input> → <what the attacker gets>. Fix: <the specific change>.
+```
+
+For example:
 
 ```
 ## Critical
-- [location] — [the actual exploit scenario, concretely, not "this could be unsafe"] — fix: [specific change]
-
-## High / Medium / Low
-- same format
+- `routes/files.js:9` **SQL injection in rename.** Exploit: `{"id": "1 OR 1=1", "name": "x"}` → renames every file. Fix: `db.run("UPDATE files SET name = ? WHERE id = ? AND owner_id = ?", name, id, req.user.id)`.
 ```
 
-Rank by exploitability, not by how easy the finding was to spot. A theoretical issue with no realistic attacker path goes in Low even if it's technically incorrect; an easy-to-trigger auth gap goes in Critical even if the fix is a one-liner. State plainly if nothing critical was found — don't manufacture severity to look thorough.
+- One finding per root cause. Merge duplicates.
+- End with one line naming what to fix first.
+- If nothing is Critical, say so plainly. Don't pad the list to look thorough.

@@ -1,66 +1,72 @@
 ---
 name: architecture-design
-description: Design or review system architecture for distributed systems, AI/ML infrastructure, edge-cloud pipelines, or AI agent systems — with mandatory trade-off decisions, failure-mode analysis, and a security/adversarial pass, not just a component diagram. Use whenever the user is designing a new system, refactoring an existing one, or asks "how should I architect X" for anything involving scaling, observability, distributed state, or ML components. Do not use for simple single-service app scaffolding with no distributed or ML complexity — that doesn't need this level of rigor.
+description: Design or review a system architecture with explicit trade-offs, failure modes, a threat model, and break scenarios. Use for "how should I architect X" questions involving scale, distributed state, edge/cloud, ML, or agents. Not for scaffolding a single simple service.
 ---
 
 # Architecture Design
 
-A diagram of boxes and arrows is not an architecture. An architecture is a set of trade-off decisions that someone was forced to make explicitly, plus a description of how the system fails. This skill forces both.
+A diagram of boxes and arrows is not an architecture. An architecture is a set of trade-offs someone decided on purpose, plus an account of how the system fails. This skill produces both.
 
-## Step 1 — Requirements framing (get this explicit before designing anything)
+## 1. Set scope and budget
 
-- **Functional**: what the system actually has to do.
-- **Non-functional, with numbers where possible**: latency budget, throughput, consistency requirement, availability target, cost ceiling, and — for edge/embedded components — power and thermal budget. Vague non-functional requirements ("fast," "scalable") are not requirements; push for numbers or explicit ranges.
+- **Match depth to the stakes.** A prototype or internal tool gets the **short form**: requirements, the three most important trade-offs, the top five failure modes, and the weakest point. A production system, anything handling money or personal data, or anything with ML or edge components gets the **full form** below.
+- **Get the numbers, once.** If load, latency, availability, or cost targets are missing, ask for them in a single message of at most three questions. If the user can't or won't answer, state your assumptions as numbers and continue. Don't stall.
+- **Reviewing an existing design?** Read the design doc or code you were given before proposing anything. Don't redesign parts that already work; say what you'd keep.
+- **Load the checklist with the requirements.** Before step 4, read `references/failure-modes.md` from this skill's base directory. It lists failure modes and threats by component type, so you check against it instead of recalling them from scratch.
 
-## Step 2 — Force the trade-off decisions, don't hide them
+## 2. Requirements
 
-Every non-trivial system has to pick a side on things that can't be maximized simultaneously. Make each decision explicit and state what's being given up:
-- Consistency vs. availability under partition, and where in the system this boundary actually sits.
-- Synchronous vs. asynchronous boundaries between components, and what breaks if a downstream service is slow.
-- Where compute is placed — edge vs. cloud — and what happens when connectivity to the other side is lost.
-- Who owns which piece of state, and what the source of truth is when two components disagree.
+- **Functional:** what the system must do, in a few bullets.
+- **Non-functional, as numbers:** throughput, latency target (with percentile), availability, data durability, consistency needs, cost ceiling, and power or bandwidth budget for edge parts. "Fast" and "scalable" aren't requirements.
 
-If the design avoids naming any of these, that's a sign the trade-offs weren't actually decided — just deferred to production.
+## 3. Decide the trade-offs
 
-## Step 3 — Component decomposition and data flow
+Name each decision and what it gives up. At minimum:
 
-Produce a diagram (Mermaid, in a `mermaid` code fence) showing components and data flow, plus a written description of what data crosses each boundary and in what format/protocol.
+- Consistency vs. availability when the network partitions, and where in the system that line sits.
+- Synchronous vs. asynchronous calls between components, and what happens when a downstream service is slow.
+- Edge vs. cloud placement, and what happens when the connection between them drops.
+- Who owns each piece of state, and which copy wins when two disagree.
 
-## Step 4 — Failure-mode analysis (mandatory, not optional)
+Write each as one line, for example: *"Ride requests are written to Postgres synchronously (consistency) and fanned out to drivers through a queue (availability). A queue outage delays dispatch; it doesn't lose rides."*
 
-Enumerate the top failure modes and what actually happens for each — not just the happy path:
-- What happens when each individual component is unavailable?
-- What happens under load beyond the stated capacity?
-- What happens with corrupted, delayed, or out-of-order data?
-- For any ML/inference component: what happens on a low-confidence or out-of-distribution input — does the system have a defined fallback, or does it silently do the wrong thing?
+If a design can't say which side it picked, the decision was deferred to production.
 
-## Step 5 — Security and adversarial pass
+## 4. Components, data flow, and failure modes
 
-Every design gets an explicit threat-model pass, not a bolted-on "add auth" line:
-- Attack surface: every external input, every trust boundary.
-- For ML components specifically: adversarial input risk (evasion), poisoning risk if the system retrains on live data, model/IP extraction risk if the model is exposed as a service, and — for physical sensing systems — sensor spoofing risk (relevant for any sensor-fusion or cyber-physical system).
-- What's actually protected by each control, and what's still exposed after it.
+- Draw the components and data flow as a Mermaid diagram, and list what crosses each boundary (data, format, protocol).
+- For each component, use the checklist to state what happens when it is **down, slow, overloaded, or fed bad data**, and whether the system degrades or fails. For any ML component, state the fallback for low-confidence or out-of-distribution input.
 
-## Step 6 — Observability
+## 5. Threat model
 
-What's measured, what triggers an alert, and how a failure in Step 4 is actually detected in practice — not just logged and ignored.
+For each trust boundary in the diagram: what can an attacker send across it, what control stops them, and what stays exposed after that control. Include the ML and sensor threats from the checklist if those components exist.
 
-## Step 7 — Stress-test the design before calling it done
+## 6. Observability
 
-Generate at least three concrete break scenarios and state what happens in each — not a hand-wave, actual scenarios: 10x the expected load, one core component down, a malicious/adversarial input on the ML path. If the answer to any of these is "undefined," that's the actual weak point in the design and should be named as such, not smoothed over.
+Name the few signals that would detect each top failure mode from step 4, and which ones page someone. A failure you can't detect will be found by users.
 
-## Output structure
+## 7. Break it before calling it done
+
+Walk through three concrete scenarios and say what breaks first in each:
+
+1. 10× the expected peak load.
+2. The most important stateful component unavailable for 15 minutes.
+3. A malicious or malformed input on the most exposed path.
+
+If any answer is "undefined," that is the design's weak point. Say so.
+
+## Output
 
 ```
-# Architecture: [system name]
-
-## Requirements (functional / non-functional with numbers)
-## Trade-off decisions made (and what each gives up)
-## Component diagram + data flow (mermaid)
-## Failure modes and behavior under each
-## Threat model / security pass
-## Observability
-## Stress-test scenarios and what breaks first
+# Architecture: <system>
+## Requirements (numbers, with stated assumptions)
+## Trade-offs (one line each: decision → what it gives up)
+## Diagram (mermaid) and boundary data
+## Failure modes (component → down / slow / bad data → behavior)
+## Threat model (boundary → attack → control → residual risk)
+## Observability (signal → failure it detects → pages?)
+## Break scenarios (scenario → what breaks first)
+## Weakest point
 ```
 
-Call out the weakest part of the design explicitly at the end — every architecture has one, and naming it beats letting it surface in production.
+Keep it as short as the stakes allow. A table row beats a paragraph.

@@ -60,6 +60,8 @@ We planted eight security flaws in a [small Flask auth module](examples/secure-c
 
 **[→ Scorecard and full, unedited review](examples/secure-code-review/)**
 
+More real runs, with inputs and verified results, are in **[examples/](examples/)**: a 37× speedup with identical output, 4 real bugs caught by generated tests, an architecture review, a research claim killed with sources, and a patent verdict.
+
 ---
 
 ## What's inside

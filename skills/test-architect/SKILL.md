@@ -1,30 +1,57 @@
 ---
 name: test-architect
-description: Generate tests focused on edge cases, invalid input, concurrency, and failure injection — not coverage padding. Use whenever the user asks for tests to be written, or when code touches concurrency, external I/O, network calls, or ML inference and needs real confidence rather than a high coverage number. Do not use this to generate ten variations of the same happy-path test.
+description: Write tests that catch real bugs, not coverage padding. Targets boundaries, malformed input, concurrency, and dependency failures, with each test tied to a named risk. Use when asked to write tests, or for code that touches I/O, network calls, shared state, or ML inference.
 ---
 
 # Test Architect
 
-Ten tests that all exercise the same happy path with different literal values raise the coverage number and raise nothing else. This skill exists to find the tests that would actually have caught a real bug.
+Ten tests that run the same happy path with different values raise the coverage number and nothing else. Find the tests that would have caught a real bug, write those, and run them.
 
-## For each function/module, identify
+## 1. Set scope and budget
 
-- **Boundary values** — empty, zero, max, one-past-max, negative where unexpected, the specific off-by-one the loop structure invites.
-- **Invalid / malformed input** — not just "wrong type" but the malformed-but-plausible input that a real caller would actually send (truncated payload, unexpected encoding, a field that's technically present but empty).
-- **Concurrent access patterns** — for anything touching shared state: what happens when two callers hit this at once? Is there a test that actually exercises that, or only single-threaded tests of concurrent-safe-looking code?
-- **Failure of each external dependency** — for every network call, DB call, or file I/O: a test for timeout, a test for an error response, a test for a partial/truncated response. "The happy path works" tells you nothing about what happens when the dependency doesn't cooperate, which in a distributed system is most of the time that matters.
-- **ML-specific**: out-of-distribution input, adversarial-looking input, and the low-confidence path — does the system's defined fallback (see `ml-security-audit` if one hasn't been checked yet) actually get exercised by a test, or does it only exist in a comment?
+- **Test what was asked.** The named function, module, or diff. Don't write tests for the whole codebase unless asked to.
+- **Follow the project's conventions.** Use the existing test framework, file layout, fixtures, and mocking style. Look at one existing test file first. If there are no tests yet, use the language's standard choice and say which.
+- **Load the risk catalog with the code.** Read `references/risk-catalog.md` from this skill's base directory in the same step as the code under test. It lists failure cases by dependency type so you don't have to recall them.
+- **Aim for the fewest tests that cover the most distinct risks.** Five tests covering five risks beat fifteen covering three.
 
-## If a real bug from this codebase is known
+## 2. List the risks before writing tests
 
-Prioritize writing the test that would have caught it before writing anything else — a regression test for a bug that already happened is worth more than five speculative edge-case tests.
+For the code under test, list each risk in one line. Check:
 
-## Anti-patterns
+- **Boundaries:** empty, zero, one, max, one past max, negative, and the off-by-one the loop invites.
+- **Malformed but plausible input:** truncated payloads, wrong encoding, a field present but empty, `null` where an object is expected.
+- **Each external dependency failing:** timeout, error response, partial or malformed response. Use the catalog for the dependency type.
+- **Concurrency:** for shared state, two callers at once. A single-threaded test of "thread-safe" code proves nothing.
+- **ML paths:** out-of-distribution input, and the low-confidence fallback actually being taken.
+- **Known bugs:** if a past bug is known, its regression test comes first.
 
-- Don't inflate the count: report the number of distinct *risks* covered, not the number of test functions written — five tests covering five real risks beats fifteen tests covering three.
-- Don't write a test that mirrors the implementation's own logic back at it (asserting the function does what its code says it does, rather than what the spec/contract requires) — that passes even when the implementation itself is wrong.
-- Don't skip the concurrency and failure-injection cases because they're harder to set up — those are exactly the cases most likely to be undertested elsewhere, which is why they matter more here.
+Drop risks that don't apply. Rank the rest by how likely and how costly the failure is.
+
+## 3. Write the tests
+
+- Assert on the **contract** (what the function should do), not on its implementation. A test that mirrors the code passes even when the code is wrong.
+- Name each test after the risk it covers: `test_refund_rejects_negative_amount`, not `test_refund_3`.
+- Make failure-injection tests deterministic: fake clocks, stubbed dependencies, seeded randomness. A flaky test is worse than none.
+- Use property-based tests (Hypothesis, fast-check, `testing/quick`) where a whole input range matters more than a few examples.
+
+## 4. Run them
+
+Run the new tests if the environment allows it. If one fails, decide whether it found a real bug or the test is wrong, and say which. Don't silently change the test to make it pass. If you can't run tests here, give the exact command.
 
 ## Output
 
-For each test added, state which specific risk it covers, in one line — if a test doesn't map to a stated risk, reconsider whether it's earning its place in the suite.
+```
+## Risks covered
+| Risk | Test | Result |
+|---|---|---|
+| <one-line risk> | `<test name>` | pass / FAIL: real bug / not run |
+
+## Tests
+<the test code>
+
+## Bugs found
+<any failing test that exposed a real bug, with the input that triggers it>
+
+## Not covered
+<risks deliberately left out, and why>
+```
