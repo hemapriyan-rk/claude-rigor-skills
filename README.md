@@ -2,12 +2,12 @@
 
 # claude-rigor-skills
 
-**30 Claude Code skills that make AI engineering and research less hand-wavy.**
+**33 Claude Code skills that make AI engineering and research less hand-wavy.**
 
 Security reviews, architecture, performance, testing, ML, research, and patents, each with explicit checks for budgets, failure modes, and evidence.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Skills: 30](https://img.shields.io/badge/skills-30-informational)](SKILLS.md)
+[![Skills: 33](https://img.shields.io/badge/skills-33-informational)](SKILLS.md)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skills-d97757)](https://docs.claude.com/en/docs/claude-code)
 [![Consistency check](https://github.com/hemapriyan-rk/claude-rigor-skills/actions/workflows/check.yml/badge.svg)](.github/workflows/check.yml)
 
@@ -60,7 +60,7 @@ We planted eight security flaws in a [small Flask auth module](examples/secure-c
 
 **[→ Scorecard and full, unedited review](examples/secure-code-review/)**
 
-More real runs, with inputs and verified results, are in **[examples/](examples/)**: a 37× speedup with identical output, 4 real bugs caught by generated tests, an architecture review, a research claim killed with sources, and a patent verdict.
+More real runs, with inputs and verified results, are in **[examples/](examples/)**: a 37× speedup with identical output, a dashboard query from 5 s to 4 ms with identical rows, a memory leak traced and fixed (322 MB → flat), a test suite from 8.9 s to 0.4 s, 4 real bugs caught by generated tests, an architecture review, a research claim killed with sources, and a patent verdict.
 
 ---
 
@@ -70,7 +70,7 @@ More real runs, with inputs and verified results, are in **[examples/](examples/
 |---|---|---|
 | 🔐 | **Security** | [`secure-code-review`](skills/secure-code-review/SKILL.md) · [`ml-security-audit`](skills/ml-security-audit/SKILL.md) · [`crypto-storage-audit`](skills/crypto-storage-audit/SKILL.md) |
 | 🏗️ | **Architecture** | [`architecture-design`](skills/architecture-design/SKILL.md) · [`architecture-optimization`](skills/architecture-optimization/SKILL.md) · [`api-contract-design`](skills/api-contract-design/SKILL.md) · [`database-design`](skills/database-design/SKILL.md) · [`frontend-architecture`](skills/frontend-architecture/SKILL.md) · [`mobile-platform-architecture`](skills/mobile-platform-architecture/SKILL.md) · [`agent-system-design`](skills/agent-system-design/SKILL.md) · [`observability-design`](skills/observability-design/SKILL.md) |
-| 🧪 | **Quality and performance** | [`test-architect`](skills/test-architect/SKILL.md) · [`distributed-debugger`](skills/distributed-debugger/SKILL.md) · [`performance-optimization`](skills/performance-optimization/SKILL.md) · [`scale-refactor`](skills/scale-refactor/SKILL.md) · [`embedded-constrained-coding`](skills/embedded-constrained-coding/SKILL.md) |
+| 🧪 | **Quality and performance** | [`test-architect`](skills/test-architect/SKILL.md) · [`distributed-debugger`](skills/distributed-debugger/SKILL.md) · [`performance-optimization`](skills/performance-optimization/SKILL.md) · [`slow-query-optimizer`](skills/slow-query-optimizer/SKILL.md) · [`memory-leak-hunter`](skills/memory-leak-hunter/SKILL.md) · [`ci-speedup`](skills/ci-speedup/SKILL.md) · [`scale-refactor`](skills/scale-refactor/SKILL.md) · [`embedded-constrained-coding`](skills/embedded-constrained-coding/SKILL.md) |
 | 🤖 | **ML engineering** | [`ml-model-selection`](skills/ml-model-selection/SKILL.md) · [`dataset-sourcing`](skills/dataset-sourcing/SKILL.md) |
 | 🔬 | **Research** | [`researcher`](skills/researcher/SKILL.md) · [`researcher-evaluator`](skills/researcher-evaluator/SKILL.md) · [`idea-finder`](skills/idea-finder/SKILL.md) · [`ieee-paper-drafter`](skills/ieee-paper-drafter/SKILL.md) |
 | 📜 | **Patents and compliance** | [`patent-novelty-evaluator`](skills/patent-novelty-evaluator/SKILL.md) · [`patent-drafter`](skills/patent-drafter/SKILL.md) · [`freedom-to-operate-analysis`](skills/freedom-to-operate-analysis/SKILL.md) · [`safety-compliance-scoping`](skills/safety-compliance-scoping/SKILL.md) |
@@ -83,7 +83,7 @@ More real runs, with inputs and verified results, are in **[examples/](examples/
 ## Pick only what you need
 
 > [!WARNING]
-> **Don't install all 30 skills unless you really use all of them.**
+> **Don't install all 33 skills unless you really use all of them.**
 >
 > - **Unneeded skills get in the way.** Claude reads every installed skill's description to decide which one to apply. Skills for work you never do can trigger on requests where you just wanted a quick answer.
 > - **Similar skills compete.** The more skills you have covering the same area, the less predictable Claude's choice becomes.
@@ -96,6 +96,7 @@ More real runs, with inputs and verified results, are in **[examples/](examples/
 | **Any software project** | `github-master` · `project-scaffolding` · `code-handoff` |
 | **Backend and distributed systems** | `architecture-design` · `api-contract-design` · `database-design` · `observability-design` · `distributed-debugger` · `performance-optimization` · `test-architect` |
 | **Frontend and mobile** | `frontend-architecture` · `mobile-platform-architecture` · `api-contract-design` · `performance-optimization` · `test-architect` |
+| **Performance problems** | `performance-optimization` · `slow-query-optimizer` · `memory-leak-hunter` · `ci-speedup` |
 | **Prototype to production** | `scale-refactor` · `architecture-optimization` · `observability-design` · `secure-code-review` · `test-architect` |
 | **Security** | `secure-code-review` · `crypto-storage-audit` · `ml-security-audit` |
 | **ML and AI engineering** | `ml-model-selection` · `dataset-sourcing` · `ml-security-audit` · `agent-system-design` |

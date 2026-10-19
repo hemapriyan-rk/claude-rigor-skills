@@ -1,6 +1,6 @@
 # Install guide for Claude
 
-This file is written for Claude Code. When a user asks you to install skills from this repository, follow these steps in order. The goal is to install **the skills this user will actually use**, not all 30.
+This file is written for Claude Code. When a user asks you to install skills from this repository, follow these steps in order. The goal is to install **the skills this user will actually use**, not all 33.
 
 ## 1. Find out what the user works on
 
@@ -8,7 +8,7 @@ Unless the user already named the skills they want, ask one short question about
 
 > What kind of work do you mostly use Claude for? For example: backend services, frontend or mobile apps, ML, security, research papers, patents, or something else.
 
-Don't send the user a list of 30 skills and ask them to pick.
+Don't send the user a list of 33 skills and ask them to pick.
 
 ## 2. Recommend a set
 
@@ -19,6 +19,7 @@ Start from the matching bundle or bundles below, then adjust to what the user to
 | Any software work (core) | `github-master`, `project-scaffolding`, `code-handoff` |
 | Backend or distributed systems | `architecture-design`, `api-contract-design`, `database-design`, `observability-design`, `distributed-debugger`, `performance-optimization`, `test-architect` |
 | Frontend or mobile | `frontend-architecture`, `mobile-platform-architecture`, `api-contract-design`, `performance-optimization`, `test-architect` |
+| Slow code, queries, memory growth, or CI | `performance-optimization`, `slow-query-optimizer`, `memory-leak-hunter`, `ci-speedup` |
 | Taking a prototype to production | `scale-refactor`, `architecture-optimization`, `observability-design`, `secure-code-review`, `test-architect` |
 | Security | `secure-code-review`, `crypto-storage-audit`, `ml-security-audit` |
 | ML or AI engineering | `ml-model-selection`, `dataset-sourcing`, `ml-security-audit`, `agent-system-design` |
